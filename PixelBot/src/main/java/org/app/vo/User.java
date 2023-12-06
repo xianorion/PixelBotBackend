@@ -1,22 +1,21 @@
 package org.app.vo;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
+//By default, the name is the classname (similar cases i.e User)
 @Entity
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column
     private Integer id;
-
+    @Column
     private String username;
-
+    @Column
     private int age;
-
+    @Column
     private String preferredVoice;
-
+    @Column
     private String email;
 
     public Integer getId() {

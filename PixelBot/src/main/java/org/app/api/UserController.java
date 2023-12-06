@@ -2,6 +2,7 @@ package org.app.api;
 
 import com.google.gson.Gson;
 import org.app.repository.UserRepository;
+import org.app.service.UserService;
 import org.app.vo.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +13,7 @@ import java.util.*;
 
 public class UserController {
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
     @GetMapping("/")
     @CrossOrigin(origins = "http://localhost:3000")
@@ -30,7 +31,7 @@ public class UserController {
         String error = null;
         Optional<User> users = null;
         try{
-            users = userRepository.findById(id);
+            users = userService.getUserById(id);
 
         }catch (Exception e){
             error = e.getMessage();
@@ -51,7 +52,7 @@ public class UserController {
         String error = null;
         Iterable<User> users = null;
         try{
-            users = userRepository.findAll();
+            users = userService.getAllUsers();
 
         }catch (Exception e){
             error = e.getMessage();
@@ -70,7 +71,7 @@ public class UserController {
         String error = null;
         Iterable<User> users = null;
         try{
-            users = userRepository.findByUsername(username);
+            users = userService.findByUsername(username);
 
         }catch (Exception e){
             error = e.getMessage();
@@ -79,6 +80,7 @@ public class UserController {
         message.put("response", error==null?"200":"400");
         message.put("data", gsonConverter.toJson(users));
         message.put("msg", error);
+        Collection<String> col = message.values();
         return message;
     }
 
@@ -90,7 +92,7 @@ public class UserController {
         String error = null;
         List<User> users = null;
         try{
-            users = userRepository.findByEmail(email);
+            users = userService.findByEmail(email);
             if(users.size() > 1){
                 error = "Multiple users found with email: "+ email;
             }
@@ -115,7 +117,7 @@ public class UserController {
         newUser.setAge(age);
         newUser.setPreferredVoice(preferredVoice);
         try{
-            userRepository.save(newUser);
+            userService.save(newUser);
         }catch(Exception e){
             error = e.getMessage();
         }
@@ -131,7 +133,7 @@ public class UserController {
     public @ResponseBody HashMap<String, String> removeUserById(int id){
         HashMap<String, String> res = new HashMap<>();
         try{
-            userRepository.deleteById(id);
+            userService.deleteById(id);
             res.put("msg", "Success");
             res.put("status", "200");
         }catch(Exception e){
@@ -146,11 +148,11 @@ public class UserController {
     @CrossOrigin(origins = "http://localhost:3000")
     public @ResponseBody HashMap<String,String> updateUserEmail(int id, @RequestParam("email") String  newEmail){
         HashMap<String, String> res = new HashMap<>();
-        Optional<User> userFound = userRepository.findById(id);
+        Optional<User> userFound = userService.getUserById(id);
         if(!userFound.isEmpty()){
             User userObj = userFound.get();
             userObj.setEmail(newEmail);
-            userRepository.save(userObj);
+            userService.save(userObj);
             res.put("msg", "Success");
             res.put("status", "200");
         }else{
@@ -164,11 +166,11 @@ public class UserController {
     @CrossOrigin(origins = "http://localhost:3000")
     public @ResponseBody HashMap<String,String> updateUserPreferredVoice(int id, @RequestParam("preferredVoice") String  newVoice){
         HashMap<String, String> res = new HashMap<>();
-        Optional<User> userFound = userRepository.findById(id);
+        Optional<User> userFound = userService.getUserById(id);
         if(!userFound.isEmpty()){
             User userObj = userFound.get();
             userObj.setPreferredVoice(newVoice);
-            userRepository.save(userObj);
+            userService.save(userObj);
             res.put("msg", "Success");
             res.put("status", "200");
         }else{
@@ -176,6 +178,25 @@ public class UserController {
             res.put("status", "400");
         }
         return res;
+    }
+
+    @GetMapping("/getUserAboveAge")
+    @CrossOrigin(origins="http://localhost:3000/")
+    public @ResponseBody HashMap<String,String> getUsersAboveAge(@RequestParam("age") int age){
+
+        HashMap<String, String> res = new HashMap<>();
+        List<User> users = userService.getUsersAboveAge(age);
+        Gson gsonConverter = new Gson();
+        if(!users.isEmpty()){
+            res.put("msg", "Success");
+            res.put("data", gsonConverter.toJson(users));
+            res.put("status", "200");
+        }else{
+            res.put("msg", "No users above "+age+" found");
+            res.put("status", "400");
+        }
+        return res;
+
     }
 
 }
