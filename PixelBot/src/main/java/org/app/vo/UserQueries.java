@@ -19,6 +19,9 @@ public class UserQueries {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Column
+    private String s3_filename;
+
     public int getId() {
         return id;
     }
@@ -49,5 +52,13 @@ public class UserQueries {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public String getS3_filename() {
+        return s3_filename;
+    }
+
+    public void setS3_filename(String s3_filename) {
+        this.s3_filename = s3_filename;
     }
 }
