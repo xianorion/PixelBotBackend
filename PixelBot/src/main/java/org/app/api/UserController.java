@@ -1,16 +1,19 @@
 package org.app.api;
 
 import com.google.gson.Gson;
+import org.apache.commons.collections.IteratorUtils;
 import org.app.repository.UserRepository;
 import org.app.service.UserService;
 import org.app.vo.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.net.HttpURLConnection;
 import java.util.*;
 
 @RestController
-
 public class UserController {
     @Autowired
     private UserService userService;
@@ -25,47 +28,38 @@ public class UserController {
 
     @GetMapping("/user")
     @CrossOrigin(origins = "http://localhost:3000")
-    public @ResponseBody HashMap<String,String> getUser(@RequestParam int id){
-        HashMap<String,String> message =  new HashMap<>();
-        Gson gsonConverter =  new Gson();
-        String error = null;
+    public @ResponseBody ResponseEntity<User> getUser(@RequestParam int id){
         Optional<User> users = null;
         try{
             users = userService.getUserById(id);
 
         }catch (Exception e){
-            error = e.getMessage();
+            throw new ResponseStatusException(
+                    HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage(), e);
         }
 
-        message.put("response", error==null?"200":"400");
-        message.put("data", users.isPresent()?gsonConverter.toJson(users.get()):"");
-        message.put("msg", error);
-        return message;
+
+        return ResponseEntity.status(HttpURLConnection.HTTP_OK).body(users.isPresent()?users.get():null);
 
     }
 
     @GetMapping("/getUsers")
     @CrossOrigin(origins = "http://localhost:3000")
-    public @ResponseBody HashMap<String,String> getUsers(){
-        HashMap<String,String> message =  new HashMap<>();
-        Gson gsonConverter =  new Gson();
-        String error = null;
-        Iterable<User> users = null;
+    public @ResponseBody ResponseEntity<List<User>> getUsers(){
+        List<User> users = null;
         try{
             users = userService.getAllUsers();
 
         }catch (Exception e){
-            error = e.getMessage();
+            throw new ResponseStatusException(
+                    HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage(), e);
         }
 
-        message.put("response", error==null?"200":"400");
-        message.put("data", gsonConverter.toJson(users));
-        message.put("msg", error);
-        return message;
+        return ResponseEntity.status(HttpURLConnection.HTTP_OK).body(users);
     }
     @GetMapping("/getUsersByName")
     @CrossOrigin(origins = "http://localhost:3000")
-    public @ResponseBody HashMap<String,String> getUsersByName(@RequestParam String username){
+    public @ResponseBody ResponseEntity<List<User>> getUsersByName(@RequestParam String username){
         HashMap<String,String> message =  new HashMap<>();
         Gson gsonConverter =  new Gson();
         String error = null;
@@ -74,79 +68,68 @@ public class UserController {
             users = userService.findByUsername(username);
 
         }catch (Exception e){
-            error = e.getMessage();
+            throw new ResponseStatusException(
+                    HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage(), e);
         }
 
-        message.put("response", error==null?"200":"400");
-        message.put("data", gsonConverter.toJson(users));
-        message.put("msg", error);
-        Collection<String> col = message.values();
-        return message;
+        return ResponseEntity.status(HttpURLConnection.HTTP_OK).body(IteratorUtils.toList(users.iterator()));
     }
 
     @GetMapping("/getUsersByEmail")
     @CrossOrigin(origins = "http://localhost:3000")
-    public @ResponseBody HashMap<String,String> getUsersByEmail(@RequestParam String email){
-        HashMap<String,String> message =  new HashMap<>();
-        Gson gsonConverter =  new Gson();
-        String error = null;
+    public @ResponseBody ResponseEntity<List<User>> getUsersByEmail(@RequestParam String email){
         List<User> users = null;
         try{
             users = userService.findByEmail(email);
-            if(users.size() > 1){
-                error = "Multiple users found with email: "+ email;
-            }
-
         }catch (Exception e){
-            error = e.getMessage();
+            throw new ResponseStatusException(
+                    HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage(), e);
         }
 
-        message.put("response", error==null?"200":"400");
-        message.put("data", gsonConverter.toJson(users));
-        message.put("msg", error);
-        return message;
+        return ResponseEntity.status(HttpURLConnection.HTTP_OK).body(users);
     }
 
     @PostMapping("/addUser")
     @CrossOrigin(origins = "http://localhost:3000")
-    public @ResponseBody Map<String, String>  addUser(@RequestParam String username, @RequestParam String email, @RequestParam String preferredVoice, @RequestParam int age){
+    public @ResponseBody ResponseEntity<Map<String, String>>  addUser(@RequestParam String username, @RequestParam String email, @RequestParam String preferredVoice, @RequestParam int age) {
         User newUser = new User();
         String error = null;
         newUser.setUsername(username);
         newUser.setEmail(email);
         newUser.setAge(age);
         newUser.setPreferredVoice(preferredVoice);
-        try{
+        try {
             userService.save(newUser);
-        }catch(Exception e){
-            error = e.getMessage();
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage(), e);
         }
 
-        HashMap<String,String> message =  new HashMap<>();
-        message.put("response", error==null?"200":"400");
+        HashMap<String, String> message = new HashMap<>();
+        message.put("response", error == null ? "200" : "400");
         message.put("msg", error);
-        return message;
+        return ResponseEntity.status(HttpURLConnection.HTTP_OK).body(message);
     }
 
     @DeleteMapping("/deleteUser")
     @CrossOrigin(origins="http://localhost:3000")
-    public @ResponseBody HashMap<String, String> removeUserById(int id){
+    public @ResponseBody ResponseEntity<HashMap<String, String>> removeUserById(int id){
         HashMap<String, String> res = new HashMap<>();
         try{
             userService.deleteById(id);
             res.put("msg", "Success");
             res.put("status", "200");
         }catch(Exception e){
-            res.put("msg", e.getMessage());
-            res.put("status", "400");
+            throw new ResponseStatusException(
+                    HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage(), e);
         }
 
-        return res;
+        return ResponseEntity.status(HttpURLConnection.HTTP_OK).body(res);
     }
 
     @PutMapping("/updateEmail")
     @CrossOrigin(origins = "http://localhost:3000")
-    public @ResponseBody HashMap<String,String> updateUserEmail(int id, @RequestParam("email") String  newEmail){
+    public @ResponseBody ResponseEntity<HashMap<String,String>> updateUserEmail(int id, @RequestParam("email") String  newEmail){
         HashMap<String, String> res = new HashMap<>();
         Optional<User> userFound = userService.getUserById(id);
         if(!userFound.isEmpty()){
@@ -156,15 +139,15 @@ public class UserController {
             res.put("msg", "Success");
             res.put("status", "200");
         }else{
-            res.put("msg", "No user found");
-            res.put("status", "400");
+            throw new ResponseStatusException(
+                    HttpURLConnection.HTTP_BAD_REQUEST, "No User Found", new Exception("Update Failed: No User Found"));
         }
-        return res;
+        return ResponseEntity.status(HttpURLConnection.HTTP_OK).body(res);
     }
 
     @PutMapping("/updatePreferredVoice")
     @CrossOrigin(origins = "http://localhost:3000")
-    public @ResponseBody HashMap<String,String> updateUserPreferredVoice(int id, @RequestParam("preferredVoice") String  newVoice){
+    public @ResponseBody ResponseEntity<HashMap<String,String>> updateUserPreferredVoice(int id, @RequestParam("preferredVoice") String  newVoice){
         HashMap<String, String> res = new HashMap<>();
         Optional<User> userFound = userService.getUserById(id);
         if(!userFound.isEmpty()){
@@ -174,28 +157,26 @@ public class UserController {
             res.put("msg", "Success");
             res.put("status", "200");
         }else{
-            res.put("msg", "No user found");
-            res.put("status", "400");
+            throw new ResponseStatusException(
+                    HttpURLConnection.HTTP_BAD_REQUEST, "No User Found", new Exception("Update Failed: No User Found"));
         }
-        return res;
+        return ResponseEntity.status(HttpURLConnection.HTTP_OK).body(res);
     }
 
     @GetMapping("/getUserAboveAge")
     @CrossOrigin(origins="http://localhost:3000/")
-    public @ResponseBody HashMap<String,String> getUsersAboveAge(@RequestParam("age") int age){
-
-        HashMap<String, String> res = new HashMap<>();
-        List<User> users = userService.getUsersAboveAge(age);
-        Gson gsonConverter = new Gson();
-        if(!users.isEmpty()){
-            res.put("msg", "Success");
-            res.put("data", gsonConverter.toJson(users));
-            res.put("status", "200");
-        }else{
-            res.put("msg", "No users above "+age+" found");
-            res.put("status", "400");
+    public @ResponseBody ResponseEntity<List<User>> getUsersAboveAge(@RequestParam("age") int age){
+        List<User> users = null;
+        try{
+            users = userService.getUsersAboveAge(age);
+            if(users.isEmpty()){
+                throw new ResponseStatusException(HttpURLConnection.HTTP_NO_CONTENT, "No users above "+age+" found", new Exception("No users above "+age+" found"));
+            }
+        }catch (Exception e){
+            throw new ResponseStatusException(
+                    HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage(), e);
         }
-        return res;
+        return ResponseEntity.status(HttpURLConnection.HTTP_OK).body(users);
 
     }
 

@@ -63,6 +63,12 @@
             <artifactId>aws-java-sdk</artifactId>
             <version>1.11.1000</version>
         </dependency>
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <version>3.2.2</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-polly -->
         <dependency>
             <groupId>com.amazonaws</groupId>
