@@ -7,6 +7,7 @@ import org.app.service.UserQueriesService;
 import org.app.vo.UserQueries;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -67,7 +68,7 @@ public class UserQueriesController {
      */
     @GetMapping("/getSpeech")
     @CrossOrigin(origins = "http://localhost:3000")
-    public ResponseEntity<byte[]> getSpeechFromText(@RequestParam("text") String text, @RequestParam("userId") int userId, @RequestParam("voice") String voice) throws IOException {
+    public ResponseEntity<byte[]> getSpeechFromText(@RequestParam("text") String text, @RequestParam("userId") int userId, @RequestParam(value="voice", required=false) String voice) throws IOException {
         byte[] audio =null;
         try{
 
@@ -77,7 +78,7 @@ public class UserQueriesController {
                     HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage(), e);
         }
 
-        return ResponseEntity.status(HttpURLConnection.HTTP_OK).body(audio);
+        return ResponseEntity.status(HttpURLConnection.HTTP_OK).contentType(MediaType.APPLICATION_OCTET_STREAM).body(audio);
     }
 
 }
