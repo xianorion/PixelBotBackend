@@ -92,14 +92,9 @@ public class UserController {
     @PostMapping("/addUser")
     @CrossOrigin(origins = "http://localhost:3000")
     public @ResponseBody ResponseEntity<Map<String, String>>  addUser(@RequestParam String username, @RequestParam String email, @RequestParam String preferredVoice, @RequestParam int age) {
-        User newUser = new User();
         String error = null;
-        newUser.setUsername(username);
-        newUser.setEmail(email);
-        newUser.setAge(age);
-        newUser.setPreferredVoice(preferredVoice);
         try {
-            userService.save(newUser);
+            userService.save(new User(username, age, preferredVoice, email));
         } catch (Exception e) {
             throw new ResponseStatusException(
                     HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage(), e);

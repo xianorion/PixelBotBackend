@@ -18,6 +18,20 @@ public class User {
     @Column
     private String email;
 
+    public User(){
+
+    }
+    public User(String username, int age, String preferredVoice, String email) {
+        this.username = username;
+        this.age = age;
+        this.preferredVoice = preferredVoice;
+        this.email = email;
+    }
+
+    public User(Integer id, String preferredVoice) {
+        this.id = id;
+        this.preferredVoice = preferredVoice;
+    }
     public Integer getId() {
         return id;
     }
@@ -25,6 +39,7 @@ public class User {
     public void setId(Integer id) {
         this.id = id;
     }
+
 
     public String getUsername() {
         return username;

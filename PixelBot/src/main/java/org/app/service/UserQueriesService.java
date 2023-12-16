@@ -46,8 +46,7 @@ public class UserQueriesService {
         //set up user query to save to db
         UserQueries uq =  new UserQueries();
         uq.setQuery(txt);
-        User u =  new User();
-        u.setId(userId);
+        User u =  new User(userId, voice);
         uq.setUser(u);
         uq.setS3_filename(filename);
         uq.setDate_initiated(Date.from(time.toInstant(ZoneOffset.UTC)));
