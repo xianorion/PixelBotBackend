@@ -9,14 +9,11 @@ import org.app.vo.User;
 import org.junit.Before;
 import org.junit.jupiter.api.Test;
 
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.function.Executable;
 import org.mockito.*;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,8 +26,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ResponseStatusException;
+import java.net.HttpURLConnection;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -46,10 +43,11 @@ public class UserControllerTest {
     UserService userService;
 
 
-
     @Before
     public void init(){
-        MockitoAnnotations.initMocks(this);
+
+//        MockitoAnnotations.initMocks(this);
+
     }
 
     @Test
@@ -63,6 +61,33 @@ public class UserControllerTest {
         Gson g = new Gson();
         User[] userList = g.fromJson(dataReturned, User[].class);
         assertTrue(userList.length > 0);
+    }
+
+    @Test
+    public void getUsersReturnsSuccessfulWhenUsersAreReceivedWithoutError() throws Exception{
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get("/getUsers").accept(MediaType.APPLICATION_JSON)).andReturn();
+        assertEquals(200,mvcResult.getResponse().getStatus());
+    }
+
+    @Test
+    public void getUsersReturns400lWhenGetUsersReturnsError() throws Exception{
+
+        doThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Simulated exception")).when(userService).getAllUsers();
+        Executable ex = () -> userController.getUsers();
+
+        assertThrows(ResponseStatusException.class, ex);
+    }
+
+    @Test
+    public void getUserByNameReturns200WhenRequestCompletesWithNoError() throws Exception {
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get("/getUsersByName").param("username", "Mack").accept(MediaType.APPLICATION_JSON)).andReturn();
+        assertEquals(200,mvcResult.getResponse().getStatus());
+    }
+
+    @Test
+    public void getUserByNameReturns400WhenRequestSentWithNoName() throws Exception {
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get("/getUsersByName").accept(MediaType.APPLICATION_JSON)).andReturn();
+        assertEquals(400,mvcResult.getResponse().getStatus());
     }
 
     @Test
@@ -90,7 +115,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void getUserByEmailWithBadRequestInputReturnsError() throws Exception {
+    public void getUserByEmailWithBadRequestWhenEmailInputIsEmptyAndReturnsError() throws Exception {
         MvcResult response = mvc.perform(MockMvcRequestBuilders.get("/getUsersByEmail").accept(MediaType.APPLICATION_JSON)).andReturn();
         assertEquals(400, response.getResponse().getStatus());
 
@@ -154,4 +179,76 @@ public class UserControllerTest {
         Executable executable = () -> userController.addUser(username,email, preferredVoice,age);
         assertThrows(ResponseStatusException.class, executable);
     }
+
+    //getUserAboveName tests
+
+    @Test
+    public void getUserAboveAgeReturnsStatus200WhenUsersAreFound() throws Exception{
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get("/getUserAboveAge").param("age", "0").accept(MediaType.APPLICATION_JSON)).andReturn();
+        assertEquals(200, mvcResult.getResponse().getStatus());
+    }
+
+    @Test
+    public void getUserAboveAgeReturnsStatusNoContentWhenNoUsersAreFound() throws Exception{
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get("/getUserAboveAge").param("age", "1000000").accept(MediaType.APPLICATION_JSON)).andReturn();
+        assertEquals(HttpURLConnection.HTTP_NO_CONTENT, mvcResult.getResponse().getStatus());
+    }
+
+    @Test
+    public void getUserAboveAgeReturnsStatus200WhenInvalidAgeInputIsGiven() throws Exception{
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get("/getUserAboveAge").accept(MediaType.APPLICATION_JSON)).andReturn();
+        assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, mvcResult.getResponse().getStatus());
+    }
+
+
+    //updateEmail tests
+
+    public int addTestUserAndGetId() throws Exception{
+        String email = "test@hello.net";
+        String username = "immaTestUser";
+        String age = "20";
+        String preferredVoice= "david";
+
+        MvcResult rs = mvc.perform(MockMvcRequestBuilders.post("/addUser").param("username",username)
+                .param("email", email)
+                .param("preferredVoice", preferredVoice)
+                .param("age", age).accept(MediaType.APPLICATION_JSON)).andReturn();
+        Gson gson = new Gson();
+        User userMade = gson.fromJson(rs.getResponse().getContentAsString(), User.class);
+        return userMade.getId();
+    }
+
+    @Transactional
+    @Rollback
+    @Test
+    public void updateEmailReturnsStatus200WhenEmailSuccessfullyUpdated() throws Exception{
+        String newEmail = "testEmail@Test.com";
+        String userId = String.valueOf(addTestUserAndGetId());
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.put("/updateEmail").param("id", userId).param("email", newEmail).accept(MediaType.APPLICATION_JSON)).andReturn();
+        assertEquals(200, mvcResult.getResponse().getStatus());
+
+    }
+
+    @Transactional
+    @Rollback
+    @Test
+    public void updateEmailReturnsStatus400WhenEmailGivenIsInvalid() throws Exception{
+        String userId = String.valueOf(addTestUserAndGetId());
+        String email = "009";
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.put("/updateEmail").param("id", userId).param("email", email).accept(MediaType.APPLICATION_JSON)).andReturn();
+        assertEquals(400, mvcResult.getResponse().getStatus());
+    }
+
+    @Transactional
+    @Rollback
+    @Test
+    public void updateEmailReturnsStatus400WhenNoEmailIsProvided() throws Exception{
+        String userId = String.valueOf(addTestUserAndGetId());
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.put("/updateEmail").param("id", userId).accept(MediaType.APPLICATION_JSON)).andReturn();
+        assertEquals(400, mvcResult.getResponse().getStatus());
+    }
+
+
+    //update preferred name test
+
 }

@@ -1,9 +1,9 @@
 package org.app.api;
 
-import com.google.gson.Gson;
 import org.apache.commons.collections.IteratorUtils;
-import org.app.repository.UserRepository;
+import org.app.Exceptions.UserNotFoundException;
 import org.app.service.UserService;
+import org.app.utils.ValidatorUtil;
 import org.app.vo.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -60,9 +60,6 @@ public class UserController {
     @GetMapping("/getUsersByName")
     @CrossOrigin(origins = "http://localhost:3000")
     public @ResponseBody ResponseEntity<List<User>> getUsersByName(@RequestParam String username){
-        HashMap<String,String> message =  new HashMap<>();
-        Gson gsonConverter =  new Gson();
-        String error = null;
         Iterable<User> users = null;
         try{
             users = userService.findByUsername(username);
@@ -91,19 +88,17 @@ public class UserController {
 
     @PostMapping("/addUser")
     @CrossOrigin(origins = "http://localhost:3000")
-    public @ResponseBody ResponseEntity<Map<String, String>>  addUser(@RequestParam String username, @RequestParam String email, @RequestParam String preferredVoice, @RequestParam int age) {
-        String error = null;
+    public @ResponseBody ResponseEntity<User> addUser(@RequestParam String username, @RequestParam String email, @RequestParam String preferredVoice, @RequestParam int age) {
+        User userSaved = null;
         try {
-            userService.save(new User(username, age, preferredVoice, email));
+            userSaved =userService.save(new User(username, age, preferredVoice, email));
         } catch (Exception e) {
             throw new ResponseStatusException(
                     HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage(), e);
         }
 
         HashMap<String, String> message = new HashMap<>();
-        message.put("response", error == null ? "200" : "400");
-        message.put("msg", error);
-        return ResponseEntity.status(HttpURLConnection.HTTP_OK).body(message);
+        return ResponseEntity.status(HttpURLConnection.HTTP_OK).body(userSaved);
     }
 
     @DeleteMapping("/deleteUser")
@@ -126,6 +121,10 @@ public class UserController {
     @CrossOrigin(origins = "http://localhost:3000")
     public @ResponseBody ResponseEntity<HashMap<String,String>> updateUserEmail(int id, @RequestParam("email") String  newEmail){
         HashMap<String, String> res = new HashMap<>();
+        if(!ValidatorUtil.isValidEmail(newEmail)){
+            throw new ResponseStatusException(
+                    HttpURLConnection.HTTP_BAD_REQUEST, newEmail+" is not a valid email", new Exception("Update Failed: Not a valid email"));
+        }
         Optional<User> userFound = userService.getUserById(id);
         if(!userFound.isEmpty()){
             User userObj = userFound.get();
@@ -160,19 +159,22 @@ public class UserController {
 
     @GetMapping("/getUserAboveAge")
     @CrossOrigin(origins="http://localhost:3000/")
-    public @ResponseBody ResponseEntity<List<User>> getUsersAboveAge(@RequestParam("age") int age){
-        List<User> users = null;
+    public @ResponseBody ResponseEntity<Optional<List<User>>> getUsersAboveAge(@RequestParam("age") int age){
+        Optional<List<User>> users = Optional.empty();
+
         try{
-            users = userService.getUsersAboveAge(age);
-            if(users.isEmpty()){
-                throw new ResponseStatusException(HttpURLConnection.HTTP_NO_CONTENT, "No users above "+age+" found", new Exception("No users above "+age+" found"));
-            }
-        }catch (Exception e){
+            users = Optional.of(userService.getUsersAboveAge(age));
+        }
+        catch(UserNotFoundException unf){
+            throw new ResponseStatusException(
+                    HttpURLConnection.HTTP_NO_CONTENT, unf.getMessage(), unf);
+        }
+        catch (Exception e){
             throw new ResponseStatusException(
                     HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage(), e);
         }
-        return ResponseEntity.status(HttpURLConnection.HTTP_OK).body(users);
 
+        return ResponseEntity.status(HttpURLConnection.HTTP_OK).body(users);
     }
 
 }

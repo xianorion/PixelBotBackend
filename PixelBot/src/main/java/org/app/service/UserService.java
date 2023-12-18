@@ -1,10 +1,9 @@
 package org.app.service;
 
+import org.app.Exceptions.UserNotFoundException;
 import org.app.repository.UserRepository;
 import org.app.vo.User;
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,8 +32,8 @@ public class UserService {
     }
 
 
-    public void save(User userObj) {
-        userRepository.save(userObj);
+    public User save(User userObj) {
+        return userRepository.save(userObj);
     }
 
     public void deleteById(int id) {
@@ -46,6 +45,9 @@ public class UserService {
     }
 
     public List<User> getUsersAboveAge(int age){
+        List<User> userList = userRepository.findUsersOfAge(age);
+        if(userList.isEmpty())
+            throw new UserNotFoundException("No users above " + age + " found");
         return userRepository.findUsersOfAge(age);
     }
 }
