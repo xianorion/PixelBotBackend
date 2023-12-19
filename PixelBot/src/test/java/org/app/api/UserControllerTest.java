@@ -249,6 +249,23 @@ public class UserControllerTest {
     }
 
 
-    //update preferred name test
+    //update preferred voice test
+    @Transactional
+    @Rollback
+    @Test
+    public void updatePreferredVoiceReturnsStatus200WhenEmailSuccessfullyUpdated() throws Exception{
+        String preferredVoice = "testEmail@Test.com";
+        String userId = String.valueOf(addTestUserAndGetId());
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.put("/updatePreferredVoice").param("id", userId).param("preferredVoice", preferredVoice).accept(MediaType.APPLICATION_JSON)).andReturn();
+        assertEquals(200, mvcResult.getResponse().getStatus());
 
+    }
+    @Transactional
+    @Rollback
+    @Test
+    public void updatePreferredVoiceReturnsStatus400WhenNoVoiceIsProvided() throws Exception{
+        String userId = String.valueOf(addTestUserAndGetId());
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.put("/updatePreferredVoice").param("id", userId).accept(MediaType.APPLICATION_JSON)).andReturn();
+        assertEquals(400, mvcResult.getResponse().getStatus());
+    }
 }
