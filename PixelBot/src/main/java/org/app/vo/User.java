@@ -2,8 +2,11 @@ package org.app.vo;
 
 import jakarta.persistence.*;
 
+import java.util.List;
+
 //By default, the name is the classname (similar cases i.e User)
 @Entity
+@Table(name = "user")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,6 +20,8 @@ public class User {
     private String preferredVoice;
     @Column
     private String email;
+    @OneToMany(mappedBy = "user")
+    private List<UserQueries> queries;
 
     public User(){
 
@@ -71,5 +76,9 @@ public class User {
 
     public void setPreferredVoice(String preferredVoice) {
         this.preferredVoice = preferredVoice;
+    }
+
+    public List<UserQueries> getQueries() {
+        return queries;
     }
 }

@@ -1,21 +1,15 @@
 package org.app.api;
 
-import com.amazonaws.services.polly.model.OutputFormat;
-import com.google.gson.Gson;
-import org.app.service.AWSPollyService;
 import org.app.service.UserQueriesService;
 import org.app.vo.UserQueries;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 

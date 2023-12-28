@@ -14,6 +14,7 @@ public class UserQueries {
     @Column
     private String query;
     @Column
+    @Temporal(TemporalType.TIMESTAMP)
     private Date date_initiated;
     @ManyToOne
     @JoinColumn(name = "user_id")

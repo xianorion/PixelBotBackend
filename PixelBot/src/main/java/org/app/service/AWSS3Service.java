@@ -5,24 +5,19 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectResult;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
-import static org.apache.juli.FileHandler.DEFAULT_BUFFER_SIZE;
 
 @Service
 public class AWSS3Service {
 
-    private final String bucketName="pixelbotvoicebucket";
+    @Value("${s3.bucketname}")
+    private String bucketName;
 
     private AmazonS3 s3client;
 
@@ -41,7 +36,7 @@ public class AWSS3Service {
 
 
         PutObjectRequest putObjectRequest =  new PutObjectRequest(bucketName, file.getName(), file);
-        pr = s3client.putObject(putObjectRequest);
+        //pr = s3client.putObject(putObjectRequest);
 
 
         return pr;
